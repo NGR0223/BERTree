@@ -4,7 +4,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "../include/IndefiniteArray.h"
+#include "../include/indefiniteArray.h"
+#include "../../Base/include/base.h"
 
 IndefArray *create_indef_array(int32_t capacity)
 {
@@ -16,58 +17,64 @@ IndefArray *create_indef_array(int32_t capacity)
     return pIndefArray;
 }
 
-void delete_indef_array(IndefArray *pIndefArray)
+void delete_indef_array(IndefArray **ppIndefArray)
 {
-    if (pIndefArray != NULL)
+    if (*ppIndefArray != NULL)
     {
-        if (pIndefArray->data != NULL)
+        if ((*ppIndefArray)->data != NULL)
         {
-            free(pIndefArray->data);
-            pIndefArray->data = NULL;
+            free((*ppIndefArray)->data);
+            (*ppIndefArray)->data = NULL;
         }
-        free(pIndefArray);
-        pIndefArray = NULL;
+        free(*ppIndefArray);
+        *ppIndefArray = NULL;
     }
 }
 
-int32_t set_data_indef_array(IndefArray *pIndefArray, unsigned char *newData, int32_t lengthNewData)
+int32_t set_data_indef_array(IndefArray *pIndefArray, unsigned char *data, int32_t lengthData)
 {
-    if (pIndefArray == NULL)
+    if (pIndefArray == NULL || data == NULL)
     {
-        return IA_RETURN_VALUE_NO_ARRAY_PTR;
+        return BER_ERROR_CODE_INVALID_ARG;
     }
 
-    if (lengthNewData > pIndefArray->capacity)
+    if (lengthData > pIndefArray->capacity)
     {
-        pIndefArray->capacity = lengthNewData;
+        pIndefArray->capacity = lengthData;
         if (pIndefArray->data)
         {
             free(pIndefArray->data);
             pIndefArray->data = NULL;
         }
-        pIndefArray->data = (unsigned char *) calloc(lengthNewData, sizeof(unsigned char));
+        pIndefArray->data = (unsigned char *) calloc(lengthData, sizeof(unsigned char));
     }
     else
     {
         memset(pIndefArray->data, 0, pIndefArray->capacity);
     }
-    pIndefArray->length = lengthNewData;
-    memcpy(pIndefArray->data, newData, lengthNewData);
+    pIndefArray->length = lengthData;
+    memcpy(pIndefArray->data, data, lengthData);
 
-    return lengthNewData;
+    return lengthData;
 }
 
-unsigned char *get_all_data_indef_array(IndefArray *pIndefArray, int32_t lengthData)
+int32_t get_all_data_indef_array(IndefArray *pIndefArray, unsigned char **data, int32_t *lengthData)
 {
-    if (lengthData > pIndefArray->length || pIndefArray->data == NULL)
+    if (pIndefArray->data == NULL)
     {
-        return NULL;
+        return IA_RETURN_VALUE_NO_ARG_PTR;
     }
 
-    unsigned char *data = (unsigned char *) calloc(lengthData, sizeof(unsigned char));
-    memcpy(data, pIndefArray, lengthData);
+    if (*data != NULL)
+    {
+        free(*data);
+        *data = NULL;
+    }
+    *data = (unsigned char *) calloc(pIndefArray->length, sizeof(unsigned char));
+    memcpy(*data, pIndefArray->data, pIndefArray->length);
+    *lengthData = pIndefArray->length;
 
-    return data;
+    return IA_RETURN_VALUE_OK;
 }
 
 int32_t copy_indef_array(IndefArray *dest, IndefArray *src)
@@ -126,8 +133,7 @@ int32_t get_octet_indef_array(IndefArray *pIndefArray, unsigned char *octet)
     return IA_RETURN_VALUE_OK;
 }
 
-
-int32_t get_octets_indef_array(IndefArray *pIndefArray, unsigned char *octets, int32_t expectedLength)
+int32_t get_octets_indef_array(IndefArray *pIndefArray, unsigned char **pOctets, int32_t expectedLength)
 {
     if (pIndefArray == NULL)
     {
@@ -137,23 +143,15 @@ int32_t get_octets_indef_array(IndefArray *pIndefArray, unsigned char *octets, i
     {
         return IA_RETURN_VALUE_OVER_REMAIN_LENGTH;
     }
-    if (pIndefArray->length == -1 || pIndefArray->data == NULL)
+    if (pIndefArray->length == 0 || pIndefArray->data == NULL)
     {
         return IA_RETURN_VALUE_NO_DATA_PTR;
     }
-    if (octets == NULL)
-    {
-        return IA_RETURN_VALUE_NO_ARG_PTR;
-    }
-    else
-    {
-        free(octets);
-        octets = NULL;
-    }
-    octets = (unsigned char *) calloc(expectedLength, sizeof(unsigned char));
-    memcpy(octets, pIndefArray->data + pIndefArray->index, expectedLength);
+    *pOctets = (unsigned char *) calloc(expectedLength, sizeof(unsigned char));
+    memcpy(*pOctets, pIndefArray->data + pIndefArray->index, expectedLength);
+    pIndefArray->index += expectedLength;
 
-    return expectedLength;
+    return IA_RETURN_VALUE_OK;
 }
 
 

@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 17)
 
 add_subdirectory(MBTree/src)
 
-add_executable(BERTree main.c)
+add_executable(BERTree main.c Base/src/base.c)
 
 target_link_libraries(BERTree MBTree)
 

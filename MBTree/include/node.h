@@ -5,7 +5,7 @@
 #ifndef BERTREE_NODE_H
 #define BERTREE_NODE_H
 
-#include "../../IndefiniteArray/include/IndefiniteArray.h"
+#include "../../IndefiniteArray/include/indefiniteArray.h"
 
 #define SIZENODES 1024
 
