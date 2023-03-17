@@ -21,15 +21,21 @@ void delete_indef_array(IndefArray **ppIndefArray);
 
 void set_data_indef_array(IndefArray *pIndefArray, unsigned char *data, int32_t lengthData, int32_t *errCode);
 
-unsigned char * get_all_data_indef_array(IndefArray *pIndefArray, int32_t *lengthGotten, int32_t *errCode);
+unsigned char *get_all_data_indef_array(IndefArray *pIndefArray, int32_t *lengthGotten, int32_t *errCode);
 
 void copy_indef_array(IndefArray *dest, IndefArray *src, int32_t *errCode);
 
-void expand_indef_array(IndefArray *pIndefArray, int32_t *errCode);
+void double_capacity_indef_array(IndefArray *pIndefArray, int32_t *errCode);
+
+void expand_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, int32_t *errCode);
+
+void reduce_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, int32_t *errCode);
+
+static void resize_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, int32_t *errCode);
 
 unsigned char get_octet_indef_array(IndefArray *pIndefArray, int32_t *errCode);
 
-unsigned char * get_octets_indef_array(IndefArray *pIndefArray, int32_t *errCode, int32_t expectedLength);
+unsigned char *get_octets_indef_array(IndefArray *pIndefArray, int32_t *errCode, int32_t expectedLength);
 
 void append_octet_indef_array(IndefArray *pIndefArray, unsigned char octet, int32_t *errCode);
 

@@ -99,22 +99,90 @@ void copy_indef_array(IndefArray *dest, IndefArray *src, int32_t *errCode)
     *errCode = BER_ERROR_CODE_OK;
 }
 
-void expand_indef_array(IndefArray *pIndefArray, int32_t *errCode)
+void double_capacity_indef_array(IndefArray *pIndefArray, int32_t *errCode)
 {
     if (pIndefArray == NULL)
     {
-        *errCode = BER_ERROR_CODE_INVALID_ARG;
+        if (errCode)
+        {
+            *errCode = BER_ERROR_CODE_INVALID_ARG;
+        }
         return;
     }
-    unsigned char *tmp = (unsigned char *) calloc(pIndefArray->capacity * 2, sizeof(unsigned char));
-    memcpy(tmp, pIndefArray->data, pIndefArray->length);
+    resize_capacity_indef_array(pIndefArray, pIndefArray->capacity * 2, errCode);
+    if (errCode)
+    {
+        *errCode = BER_ERROR_CODE_OK;
+    }
+}
 
-    free(pIndefArray->data);
-    pIndefArray->data = NULL;
+void expand_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, int32_t *errCode)
+{
+    if (pIndefArray == NULL || newCapacity <= pIndefArray->capacity)
+    {
+        if (errCode)
+        {
+            *errCode = BER_ERROR_CODE_INVALID_ARG;
+        }
+        return;
+    }
+    resize_capacity_indef_array(pIndefArray, newCapacity, errCode);
+    if (errCode)
+    {
+        *errCode = BER_ERROR_CODE_OK;
+    }
+}
 
-    pIndefArray->data = tmp;
-    pIndefArray->capacity *= 2;
-    *errCode = BER_ERROR_CODE_OK;
+void reduce_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, int32_t *errCode)
+{
+    if (pIndefArray == NULL || newCapacity >= pIndefArray->capacity)
+    {
+        if (errCode)
+        {
+            *errCode = BER_ERROR_CODE_INVALID_ARG;
+        }
+        return;
+    }
+    resize_capacity_indef_array(pIndefArray, newCapacity, errCode);
+    if (errCode)
+    {
+        *errCode = BER_ERROR_CODE_OK;
+    }
+}
+
+static void resize_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, int32_t *errCode)
+{
+    if (pIndefArray == NULL || newCapacity <= 0)
+    {
+        if (errCode)
+        {
+            *errCode = BER_ERROR_CODE_INVALID_ARG;
+        }
+        return;
+    }
+
+    pIndefArray->capacity = newCapacity;
+    /*
+     * If index is bigger than new capacity, the index will be set to zero
+     */
+    if (pIndefArray->index > newCapacity - 1)
+    {
+        pIndefArray->index = 0;
+    }
+    /*
+     * If new capacity is smaller than length of data in IndefArray, it will not copy old data to new data space
+     */
+    unsigned char *tmpData = (unsigned char *) calloc(newCapacity, sizeof(unsigned char));
+    if (newCapacity >= pIndefArray->length)
+    {
+        memcpy(tmpData, pIndefArray->data, pIndefArray->length);
+        free(pIndefArray->data);
+        pIndefArray->data = tmpData;
+    }
+    else
+    {
+        pIndefArray->length = 0;
+    }
 }
 
 unsigned char get_octet_indef_array(IndefArray *pIndefArray, int32_t *errCode)
@@ -126,7 +194,7 @@ unsigned char get_octet_indef_array(IndefArray *pIndefArray, int32_t *errCode)
     }
     if (pIndefArray->index + 1 > pIndefArray->length)
     {
-        *errCode = BER_ERROR_CODE_NO_ENOUGH_LENGTH;
+        *errCode = BER_ERROR_CODE_NO_ENOUGH_OCTETS;
         return 0;
     }
     if (pIndefArray->length == 0 || pIndefArray->data == NULL)
@@ -150,7 +218,7 @@ unsigned char *get_octets_indef_array(IndefArray *pIndefArray, int32_t *errCode,
     }
     if (pIndefArray->index + expectedLength > pIndefArray->length)
     {
-        *errCode = BER_ERROR_CODE_NO_ENOUGH_LENGTH;
+        *errCode = BER_ERROR_CODE_NO_ENOUGH_OCTETS;
         return NULL;
     }
     if (pIndefArray->length == 0 || pIndefArray->data == NULL)

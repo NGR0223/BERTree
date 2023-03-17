@@ -37,55 +37,80 @@ void add_child(NODE *parent, NODE *child, TREE *tree, int32_t *errCode)
 
     memcpy(&tree->nodes[tree->nextEntry], child, sizeof(NODE));
     tree->nextEntry++;
-    return BER_ERROR_CODE_OK;
+    *errCode = BER_ERROR_CODE_OK;
 }
 
-static void handle_TLV(unsigned char *data, int32_t lengthData, TREE *tree)
+static void handle_TLV(IndefArray *data, TREE *tree, int32_t *errCode)
 {
-    unsigned char *tmp = (unsigned char *) calloc(lengthData, sizeof(unsigned char));
-    memcpy(tmp, data, lengthData);
-    int32_t indexTmp = 0;
-
     // Handle Type
-    unsigned char firstByte = *tmp;
-    indexTmp++;
+    unsigned char firstOctet = get_octet_indef_array(data, errCode);
 
-    int32_t flagConstructed = firstByte >> 5 & 0x01;
-    int32_t type = 0;
-    if ((firstByte & 0x31) == 0x31)
+    int32_t flagConstructed = firstOctet >> 5 & 0x01;
+    if ((firstOctet & 0x1f) == 0x1f) // 0x1F = 31
     {
-        unsigned char curByte = *tmp;
-        indexTmp++;
-        while (curByte >> 7 & 0x01)
+        unsigned char curOctet = get_octet_indef_array(data, errCode);
+        while (curOctet >> 7 & 0x01) // msb is "1", which means more octets
         {
 
         }
     }
+    else
+    {
+        IndefArray *type = create_indef_array(1);
+        append_octet_indef_array(type, firstOctet, errCode);
+    }
+
+    // Handle Length
+    firstOctet = get_octet_indef_array(data, errCode);
+    IndefArray *length = create_indef_array(1);
+    append_octet_indef_array(length, firstOctet, errCode);
+    if (firstOctet >> 7 & 0x01)
+    {
+        if ((firstOctet & 0x7f) == 0)    // Indefinite
+        {
+
+        }
+        else if ((firstOctet & 0x7f) == 127) // Reserved
+        {
+            *errCode = BER_ERROR_CODE_RESERVED_LENGTH;
+            return;
+        }
+        else    // Definite, long
+        {
+            int32_t numOctets = firstOctet & 0x7f;
+            expand_capacity_indef_array(length, 1 + numOctets, errCode);
+
+            unsigned char *octetsLength = get_octets_indef_array(data, errCode, numOctets);
+            append_octets_indef_array(length, octetsLength, numOctets, errCode);
+        }
+    }
 }
 
-int32_t convert_hex_string_to_mb_tree(unsigned char *data, int32_t lengthData, TREE *tree)
+void convert_hex_string_to_mb_tree(unsigned char *data, int32_t lengthData, TREE *tree, int32_t *errCode)
 {
     if (data == NULL || lengthData <= 0)
     {
-        return BER_ERROR_CODE_INVALID_ARG;
+        *errCode = BER_ERROR_CODE_INVALID_ARG;
+        return;
     }
 
-    unsigned char *tmp = (unsigned char *) calloc(lengthData, sizeof(unsigned char));
-    memcpy(tmp, data, lengthData);
-
-    int32_t indexData = 0;
-    while (indexData < lengthData - 1)
+    // Convert unsigned char *data to IndefArray
+    IndefArray *tmp = create_indef_array(lengthData);
+    set_data_indef_array(tmp, data, lengthData, errCode);
+    if (*errCode != 0)
     {
-
+        return;
     }
+
+    handle_TLV(tmp, tree, errCode);
 }
 
-void show_mb_tree(TREE *tree)
+void show_mb_tree(TREE *tree, int32_t *errCode)
 {
 
 }
 
-unsigned char *convert_mb_tree_to_hex_string(int32_t *lengthData, TREE *tree)
+unsigned char *convert_mb_tree_to_hex_string(int32_t *lengthData, TREE *tree, int32_t *errCode)
 {
 
 }
