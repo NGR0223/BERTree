@@ -7,19 +7,13 @@
 
 #include "../include/node.h"
 
-typedef enum
-{
-    TREE_RETURN_VALUE_NO_ARG_PTR = -1,
-    TREE_RETURN_VALUE_OK = 0,
-} TREE_RETURN_VALUE;
-
 typedef struct tree
 {
     int32_t nextEntry;
     NODE nodes[SIZENODES];
 } TREE;
 
-int32_t add_child(NODE *parent, NODE *child, TREE *tree);
+void add_child(NODE *parent, NODE *child, TREE *tree, int *errCode);
 
 int32_t convert_hex_string_to_mb_tree(unsigned char *data, int32_t lengthData, TREE *tree);
 

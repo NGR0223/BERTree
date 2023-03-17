@@ -3,6 +3,7 @@
 //
 
 #include "../include/tree.h"
+#include "../../Base/include/base.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -16,11 +17,12 @@ static int32_t get_index_last_child(int32_t indexChild, TREE *tree)
     return indexChild;
 }
 
-int32_t add_child(NODE *parent, NODE *child, TREE *tree)
+void add_child(NODE *parent, NODE *child, TREE *tree, int32_t *errCode)
 {
-    if (parent == NULL || child == NULL)
+    if (parent == NULL || child == NULL || errCode == NULL)
     {
-        return TREE_RETURN_VALUE_NO_ARG_PTR;
+        *errCode = BER_ERROR_CODE_INVALID_ARG;
+        return;
     }
 
     if (parent->indexChild == 0)
@@ -35,7 +37,7 @@ int32_t add_child(NODE *parent, NODE *child, TREE *tree)
 
     memcpy(&tree->nodes[tree->nextEntry], child, sizeof(NODE));
     tree->nextEntry++;
-    return TREE_RETURN_VALUE_OK;
+    return BER_ERROR_CODE_OK;
 }
 
 static void handle_TLV(unsigned char *data, int32_t lengthData, TREE *tree)
@@ -65,7 +67,7 @@ int32_t convert_hex_string_to_mb_tree(unsigned char *data, int32_t lengthData, T
 {
     if (data == NULL || lengthData <= 0)
     {
-        return TREE_RETURN_VALUE_NO_ARG_PTR;
+        return BER_ERROR_CODE_INVALID_ARG;
     }
 
     unsigned char *tmp = (unsigned char *) calloc(lengthData, sizeof(unsigned char));

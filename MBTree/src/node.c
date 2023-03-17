@@ -11,9 +11,9 @@ void init_node(NODE *initNode, IndefArray *type, IndefArray *length, IndefArray 
     initNode->indexBrother = 0;
     initNode->indexChild = 0;
 
-    copy_indef_array(initNode->type, type);
-    copy_indef_array(initNode->length, length);
-    copy_indef_array(initNode->value, value);
+    copy_indef_array(initNode->type, type, NULL);
+    copy_indef_array(initNode->length, length, NULL);
+    copy_indef_array(initNode->value, value, NULL);
 }
 
 
