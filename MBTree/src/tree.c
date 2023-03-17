@@ -43,10 +43,10 @@ void add_child(NODE *parent, NODE *child, TREE *tree, int32_t *errCode)
 static void handle_TLV(IndefArray *data, TREE *tree, int32_t *errCode)
 {
     // Handle Type
-    unsigned char firstOctet = get_octet_indef_array(data, errCode);
+    unsigned char firstOctetType = get_octet_indef_array(data, errCode);
 
-    int32_t flagConstructed = firstOctet >> 5 & 0x01;
-    if ((firstOctet & 0x1f) == 0x1f) // 0x1F = 31
+    int32_t flagConstructed = firstOctetType >> 5 & 0x01;
+    if ((firstOctetType & 0x1f) == 0x1f)    // Value of type is bigger than 31(Hex:1f)
     {
         unsigned char curOctet = get_octet_indef_array(data, errCode);
         while (curOctet >> 7 & 0x01) // msb is "1", which means more octets
@@ -57,32 +57,43 @@ static void handle_TLV(IndefArray *data, TREE *tree, int32_t *errCode)
     else
     {
         IndefArray *type = create_indef_array(1);
-        append_octet_indef_array(type, firstOctet, errCode);
+        append_octet_indef_array(type, firstOctetType, errCode);
     }
 
     // Handle Length
-    firstOctet = get_octet_indef_array(data, errCode);
+    unsigned char firstOctetLength = get_octet_indef_array(data, errCode);
     IndefArray *length = create_indef_array(1);
-    append_octet_indef_array(length, firstOctet, errCode);
-    if (firstOctet >> 7 & 0x01)
+    append_octet_indef_array(length, firstOctetLength, errCode);
+    int32_t flagIndefLength = 0;
+    if (firstOctetLength == 128)
     {
-        if ((firstOctet & 0x7f) == 0)    // Indefinite
-        {
+        flagIndefLength = 1;
+    }
+    else if (firstOctetLength > 128 && firstOctetLength < 255)   // Definite, long
+    {
+        int32_t numOctets = firstOctetLength & 0x7f;
+        expand_capacity_indef_array(length, 1 + numOctets, errCode);
 
-        }
-        else if ((firstOctet & 0x7f) == 127) // Reserved
+        unsigned char *octetsLength = get_octets_indef_array(data, errCode, numOctets);
+        append_octets_indef_array(length, octetsLength, numOctets, errCode);
+    }
+    else if (firstOctetLength == 255)   // Reserved
+    {
+        if (errCode != NULL)
         {
             *errCode = BER_ERROR_CODE_RESERVED_LENGTH;
-            return;
         }
-        else    // Definite, long
-        {
-            int32_t numOctets = firstOctet & 0x7f;
-            expand_capacity_indef_array(length, 1 + numOctets, errCode);
+        return;
+    }
 
-            unsigned char *octetsLength = get_octets_indef_array(data, errCode, numOctets);
-            append_octets_indef_array(length, octetsLength, numOctets, errCode);
-        }
+    // Handle Value
+    if (flagIndefLength)
+    {
+
+    }
+    else
+    {
+
     }
 }
 
