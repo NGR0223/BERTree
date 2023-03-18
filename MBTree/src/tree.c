@@ -7,6 +7,16 @@
 #include <string.h>
 #include <stdlib.h>
 
+void init_node(NODE *initNode, IndefArray *type, IndefArray *length, IndefArray *value)
+{
+    initNode->indexParent = 0;
+    initNode->indexBrother = 0;
+    initNode->indexChild = 0;
+
+    copy_indef_array(initNode->type, type, NULL);
+    copy_indef_array(initNode->length, length, NULL);
+    copy_indef_array(initNode->value, value, NULL);
+}
 
 static int32_t get_index_last_child(int32_t indexChild, TREE *tree)
 {
@@ -40,42 +50,44 @@ void add_child(NODE *parent, NODE *child, TREE *tree, int32_t *errCode)
     *errCode = BER_ERROR_CODE_OK;
 }
 
-static void handle_TLV(IndefArray *data, TREE *tree, int32_t *errCode)
+static void handle_primitive_value(IndefArray *pValue, TREE *tree)
+{
+
+}
+
+static void handle_constructed_value(IndefArray *pValue, TREE *tree)
+{
+
+}
+
+static void handle_TLV(IndefArray *pData, TREE *pTree, int32_t *errCode)
 {
     // Handle Type
-    unsigned char firstOctetType = get_octet_indef_array(data, errCode);
-
+    unsigned char firstOctetType = get_octet_indef_array(pData, errCode);
     int32_t flagConstructed = firstOctetType >> 5 & 0x01;
-    if ((firstOctetType & 0x1f) == 0x1f)    // Value of type is bigger than 31(Hex:1f)
+
+    IndefArray *pType = create_indef_array(1);
+    append_octet_indef_array(pType, firstOctetType, errCode);
+    if ((firstOctetType & 0x1f) == 0x1f)    // Value of Type is bigger than 31(Hex:1f)
     {
-        unsigned char curOctet = get_octet_indef_array(data, errCode);
+        unsigned char curOctet = get_octet_indef_array(pData, errCode);
         while (curOctet >> 7 & 0x01) // msb is "1", which means more octets
         {
 
         }
     }
-    else
-    {
-        IndefArray *type = create_indef_array(1);
-        append_octet_indef_array(type, firstOctetType, errCode);
-    }
 
     // Handle Length
-    unsigned char firstOctetLength = get_octet_indef_array(data, errCode);
-    IndefArray *length = create_indef_array(1);
-    append_octet_indef_array(length, firstOctetLength, errCode);
-    int32_t flagIndefLength = 0;
-    if (firstOctetLength == 128)
+    unsigned char firstOctetLength = get_octet_indef_array(pData, errCode);
+    IndefArray *pLength = create_indef_array(1);
+    append_octet_indef_array(pLength, firstOctetLength, errCode);
+    if (firstOctetLength > 128 && firstOctetLength < 255)   // Definite, long
     {
-        flagIndefLength = 1;
-    }
-    else if (firstOctetLength > 128 && firstOctetLength < 255)   // Definite, long
-    {
-        int32_t numOctets = firstOctetLength & 0x7f;
-        expand_capacity_indef_array(length, 1 + numOctets, errCode);
+        int32_t numOctetsLength = firstOctetLength & 0x7f;
+        expand_capacity_indef_array(pLength, 1 + numOctetsLength, errCode);
 
-        unsigned char *octetsLength = get_octets_indef_array(data, errCode, numOctets);
-        append_octets_indef_array(length, octetsLength, numOctets, errCode);
+        unsigned char *octetsLength = get_octets_indef_array(pData, errCode, numOctetsLength);
+        append_octets_indef_array(pLength, octetsLength, numOctetsLength, errCode);
     }
     else if (firstOctetLength == 255)   // Reserved
     {
@@ -87,13 +99,37 @@ static void handle_TLV(IndefArray *data, TREE *tree, int32_t *errCode)
     }
 
     // Handle Value
-    if (flagIndefLength)
+    int32_t numOctetsValue = -1;
+    if (flagConstructed)    // Constructed Value
     {
 
     }
-    else
+    else    // Primitive Value
     {
+        if (firstOctetLength < 128) // Definite, short
+        {
+            numOctetsValue = firstOctetLength;
+            IndefArray *pValue = create_indef_array(numOctetsValue);
+            unsigned char *octetsValue = get_octets_indef_array(pData, errCode, numOctetsValue);
+            set_data_indef_array(pValue, octetsValue, numOctetsValue, errCode);
+        }
+        else if (firstOctetLength == 128)    // Indefinite
+        {
 
+        }
+        else if (firstOctetLength > 128 && firstOctetLength < 255)  // Definite, long
+        {
+
+        }
+        else    // Reserved
+        {
+            if (errCode != NULL)
+            {
+
+            }
+        }
+        NODE *pNode = (NODE *) calloc(1, sizeof(NODE));
+        init_node(pNode, pType, pLength, pData);
     }
 }
 

@@ -7,6 +7,7 @@
 #include "../include/indefiniteArray.h"
 #include "../../Base/include/base.h"
 
+
 IndefArray *create_indef_array(int32_t capacity)
 {
     IndefArray *pIndefArray = (IndefArray *) calloc(1, sizeof(IndefArray));
