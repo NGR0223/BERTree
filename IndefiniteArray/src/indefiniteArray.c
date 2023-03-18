@@ -8,79 +8,79 @@
 #include "../../Base/include/base.h"
 
 
-IndefArray *create_indef_array(int32_t capacity)
+IA *create_indef_array(int32_t capacity)
 {
-    IndefArray *pIndefArray = (IndefArray *) calloc(1, sizeof(IndefArray));
-    pIndefArray->capacity = capacity;
-    pIndefArray->length = 0;
-    pIndefArray->index = 0;
-    pIndefArray->data = (unsigned char *) calloc(capacity, sizeof(unsigned char));
-    return pIndefArray;
+    IA *pIA = (IA *) calloc(1, sizeof(IA));
+    pIA->capacity = capacity;
+    pIA->length = 0;
+    pIA->index = 0;
+    pIA->data = (unsigned char *) calloc(capacity, sizeof(unsigned char));
+    return pIA;
 }
 
-void delete_indef_array(IndefArray **ppIndefArray)
+void delete_indef_array(IA **ppIA)
 {
-    if (*ppIndefArray != NULL)
+    if (*ppIA != NULL)
     {
-        if ((*ppIndefArray)->data != NULL)
+        if ((*ppIA)->data != NULL)
         {
-            free((*ppIndefArray)->data);
-            (*ppIndefArray)->data = NULL;
+            free((*ppIA)->data);
+            (*ppIA)->data = NULL;
         }
-        free(*ppIndefArray);
-        *ppIndefArray = NULL;
+        free(*ppIA);
+        *ppIA = NULL;
     }
 }
 
-void set_data_indef_array(IndefArray *pIndefArray, unsigned char *data, int32_t lengthData, int32_t *errCode)
+void set_data_indef_array(IA *pIA, unsigned char *data, int32_t lengthData, int32_t *errCode)
 {
-    if (pIndefArray == NULL || data == NULL)
+    if (pIA == NULL || data == NULL)
     {
         *errCode = BER_ERROR_CODE_INVALID_ARG;
         return;
     }
 
-    if (lengthData > pIndefArray->capacity)
+    if (lengthData > pIA->capacity)
     {
-        pIndefArray->capacity = lengthData;
-        if (pIndefArray->data)
+        pIA->capacity = lengthData;
+        if (pIA->data)
         {
-            free(pIndefArray->data);
-            pIndefArray->data = NULL;
+            free(pIA->data);
+            pIA->data = NULL;
         }
-        pIndefArray->data = (unsigned char *) calloc(lengthData, sizeof(unsigned char));
+        pIA->data = (unsigned char *) calloc(lengthData, sizeof(unsigned char));
     }
     else
     {
-        memset(pIndefArray->data, 0, pIndefArray->capacity);
+        memset(pIA->data, 0, pIA->capacity);
     }
-    pIndefArray->length = lengthData;
-    memcpy(pIndefArray->data, data, lengthData);
+    pIA->length = lengthData;
+    memcpy(pIA->data, data, lengthData);
 
     *errCode = BER_ERROR_CODE_OK;
 }
 
-unsigned char *get_all_data_indef_array(IndefArray *pIndefArray, int32_t *lengthGotten, int32_t *errCode)
+unsigned char *get_all_data_indef_array(IA *pIA, int32_t *lengthGotten, int32_t *errCode)
 {
-    if (pIndefArray == NULL || lengthGotten == NULL)
+    if (pIA == NULL || lengthGotten == NULL)
     {
         *errCode = BER_ERROR_CODE_INVALID_ARG;
         return NULL;
     }
-    if (pIndefArray->data == NULL)
+    if (pIA->data == NULL)
     {
         *errCode = BER_ERROR_CODE_ARRAY_NO_DATA;
         return NULL;
     }
-    unsigned char *data = (unsigned char *) calloc(pIndefArray->length, sizeof(unsigned char));
-    memcpy(data, pIndefArray->data, pIndefArray->length);
-    *lengthGotten = pIndefArray->length;
+    unsigned char *data = (unsigned char *) calloc(pIA->length, sizeof(unsigned char));
+    memcpy(data, pIA->data, pIA->length);
+    *lengthGotten = pIA->length;
 
     *errCode = BER_ERROR_CODE_OK;
     return data;
 }
 
-void copy_indef_array(IndefArray *dest, IndefArray *src, int32_t *errCode)
+void copy_indef_array(IA *dest, IA *src, int32_t *errCode)
 {
     if (dest == NULL || src == NULL)
     {
@@ -100,9 +100,9 @@ void copy_indef_array(IndefArray *dest, IndefArray *src, int32_t *errCode)
     *errCode = BER_ERROR_CODE_OK;
 }
 
-void double_capacity_indef_array(IndefArray *pIndefArray, int32_t *errCode)
+void double_capacity_indef_array(IA *pIA, int32_t *errCode)
 {
-    if (pIndefArray == NULL)
+    if (pIA == NULL)
     {
         if (errCode)
         {
@@ -110,16 +110,16 @@ void double_capacity_indef_array(IndefArray *pIndefArray, int32_t *errCode)
         }
         return;
     }
-    resize_capacity_indef_array(pIndefArray, pIndefArray->capacity * 2, errCode);
+    resize_capacity_indef_array(pIA, pIA->capacity * 2, errCode);
     if (errCode)
     {
         *errCode = BER_ERROR_CODE_OK;
     }
 }
 
-void expand_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, int32_t *errCode)
+void expand_capacity_indef_array(IA *pIA, int32_t newCapacity, int32_t *errCode)
 {
-    if (pIndefArray == NULL || newCapacity <= pIndefArray->capacity)
+    if (pIA == NULL || newCapacity <= pIA->capacity)
     {
         if (errCode)
         {
@@ -127,16 +127,16 @@ void expand_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, i
         }
         return;
     }
-    resize_capacity_indef_array(pIndefArray, newCapacity, errCode);
+    resize_capacity_indef_array(pIA, newCapacity, errCode);
     if (errCode)
     {
         *errCode = BER_ERROR_CODE_OK;
     }
 }
 
-void reduce_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, int32_t *errCode)
+void reduce_capacity_indef_array(IA *pIA, int32_t newCapacity, int32_t *errCode)
 {
-    if (pIndefArray == NULL || newCapacity >= pIndefArray->capacity)
+    if (pIA == NULL || newCapacity >= pIA->capacity)
     {
         if (errCode)
         {
@@ -144,16 +144,16 @@ void reduce_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, i
         }
         return;
     }
-    resize_capacity_indef_array(pIndefArray, newCapacity, errCode);
+    resize_capacity_indef_array(pIA, newCapacity, errCode);
     if (errCode)
     {
         *errCode = BER_ERROR_CODE_OK;
     }
 }
 
-static void resize_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, int32_t *errCode)
+static void resize_capacity_indef_array(IA *pIA, int32_t newCapacity, int32_t *errCode)
 {
-    if (pIndefArray == NULL || newCapacity <= 0)
+    if (pIA == NULL || newCapacity <= 0)
     {
         if (errCode)
         {
@@ -162,124 +162,124 @@ static void resize_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapa
         return;
     }
 
-    pIndefArray->capacity = newCapacity;
+    pIA->capacity = newCapacity;
     /*
      * If index is bigger than new capacity, the index will be set to zero
      */
-    if (pIndefArray->index > newCapacity - 1)
+    if (pIA->index > newCapacity - 1)
     {
-        pIndefArray->index = 0;
+        pIA->index = 0;
     }
     /*
-     * If new capacity is smaller than length of data in IndefArray, it will not copy old data to new data space
+     * If new capacity is smaller than length of data in IA, it will not copy old data to new data space
      */
     unsigned char *tmpData = (unsigned char *) calloc(newCapacity, sizeof(unsigned char));
-    if (newCapacity >= pIndefArray->length)
+    if (newCapacity >= pIA->length)
     {
-        memcpy(tmpData, pIndefArray->data, pIndefArray->length);
-        free(pIndefArray->data);
-        pIndefArray->data = tmpData;
+        memcpy(tmpData, pIA->data, pIA->length);
+        free(pIA->data);
+        pIA->data = tmpData;
     }
     else
     {
-        pIndefArray->length = 0;
+        pIA->length = 0;
     }
 }
 
-unsigned char get_octet_indef_array(IndefArray *pIndefArray, int32_t *errCode)
+unsigned char get_octet_indef_array(IA *pIA, int32_t *errCode)
 {
-    if (pIndefArray == NULL || errCode == NULL)
+    if (pIA == NULL || errCode == NULL)
     {
         *errCode = BER_ERROR_CODE_INVALID_ARG;
         return 0;
     }
-    if (pIndefArray->index + 1 > pIndefArray->length)
+    if (pIA->index + 1 > pIA->length)
     {
         *errCode = BER_ERROR_CODE_NO_ENOUGH_OCTETS;
         return 0;
     }
-    if (pIndefArray->length == 0 || pIndefArray->data == NULL)
+    if (pIA->length == 0 || pIA->data == NULL)
     {
         *errCode = BER_ERROR_CODE_ARRAY_NO_DATA;
         return 0;
     }
-    unsigned char octet = *(pIndefArray->data + pIndefArray->index);
-    pIndefArray->index++;
+    unsigned char octet = *(pIA->data + pIA->index);
+    pIA->index++;
 
     *errCode = BER_ERROR_CODE_OK;
     return octet;
 }
 
-unsigned char *get_octets_indef_array(IndefArray *pIndefArray, int32_t *errCode, int32_t expectedLength)
+unsigned char *get_octets_indef_array(IA *pIA, int32_t *errCode, int32_t expectedLength)
 {
-    if (pIndefArray == NULL || expectedLength == 0)
+    if (pIA == NULL || expectedLength == 0)
     {
         *errCode = BER_ERROR_CODE_INVALID_ARG;
         return NULL;
     }
-    if (pIndefArray->index + expectedLength > pIndefArray->length)
+    if (pIA->index + expectedLength > pIA->length)
     {
         *errCode = BER_ERROR_CODE_NO_ENOUGH_OCTETS;
         return NULL;
     }
-    if (pIndefArray->length == 0 || pIndefArray->data == NULL)
+    if (pIA->length == 0 || pIA->data == NULL)
     {
         *errCode = BER_ERROR_CODE_ARRAY_NO_DATA;
         return NULL;
     }
     unsigned char *data = (unsigned char *) calloc(expectedLength, sizeof(unsigned char));
-    memcpy(data, pIndefArray->data + pIndefArray->index, expectedLength);
-    pIndefArray->index += expectedLength;
+    memcpy(data, pIA->data + pIA->index, expectedLength);
+    pIA->index += expectedLength;
 
     *errCode = BER_ERROR_CODE_OK;
     return data;
 }
 
 
-void append_octet_indef_array(IndefArray *pIndefArray, unsigned char octet, int32_t *errCode)
+void append_octet_indef_array(IA *pIA, unsigned char octet, int32_t *errCode)
 {
-    if (pIndefArray == NULL)
+    if (pIA == NULL)
     {
         *errCode = BER_ERROR_CODE_INVALID_ARG;
         return;
     }
-    if (pIndefArray->length == pIndefArray->capacity)
+    if (pIA->length == pIA->capacity)
     {
-//        IndefArray *pNewIndefArray = create_indef_array(pIndefArray->capacity * 2);
-//        memcpy(pNewIndefArray->data, pIndefArray->data, pIndefArray->length);
-//        pNewIndefArray->data[pNewIndefArray->length] = octet;
-//        pNewIndefArray->index = pIndefArray->index;
-//        pNewIndefArray->length = pIndefArray->length + 1;
+//        IA *pNewIA = create_indef_array(pIA->capacity * 2);
+//        memcpy(pNewIA->data, pIA->data, pIA->length);
+//        pNewIA->data[pNewIA->length] = octet;
+//        pNewIA->index = pIA->index;
+//        pNewIA->length = pIA->length + 1;
     }
     else
     {
-        pIndefArray->data[pIndefArray->length] = octet;
-        pIndefArray->length++;
+        pIA->data[pIA->length] = octet;
+        pIA->length++;
     }
 
     *errCode = BER_ERROR_CODE_OK;
 }
 
-void append_octets_indef_array(IndefArray *pIndefArray, unsigned char *octets, int32_t appendedLength, int32_t *errCode)
+void append_octets_indef_array(IA *pIA, unsigned char *octets, int32_t appendedLength, int32_t *errCode)
 {
-    if (pIndefArray == NULL || octets == NULL)
+    if (pIA == NULL || octets == NULL)
     {
         *errCode = BER_ERROR_CODE_INVALID_ARG;
         return;
     }
-    if (pIndefArray->length + appendedLength > pIndefArray->capacity)
+    if (pIA->length + appendedLength > pIA->capacity)
     {
-//        IndefArray *pNewIndefArray = create_indef_array(pIndefArray->capacity * 2);
-//        memcpy(pNewIndefArray->data, pIndefArray->data, pIndefArray->length);
-//        memcpy(pNewIndefArray->data + pIndefArray->length, octets, appendedLength);
-//        pNewIndefArray->index = pIndefArray->index;
-//        pNewIndefArray->length = pIndefArray->length + appendedLength;
+//        IA *pNewIA = create_indef_array(pIA->capacity * 2);
+//        memcpy(pNewIA->data, pIA->data, pIA->length);
+//        memcpy(pNewIA->data + pIA->length, octets, appendedLength);
+//        pNewIA->index = pIA->index;
+//        pNewIA->length = pIA->length + appendedLength;
 
     }
     else
     {
-        memcpy(pIndefArray->data + pIndefArray->length, octets, appendedLength);
-        pIndefArray->length += appendedLength;
+        memcpy(pIA->data + pIA->length, octets, appendedLength);
+        pIA->length += appendedLength;
     }
     *errCode = BER_ERROR_CODE_OK;
 }

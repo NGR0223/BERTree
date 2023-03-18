@@ -13,33 +13,33 @@ typedef struct indef_array
     int32_t length;
     int32_t index;
     unsigned char *data;
-} IndefArray;
+} IA;
 
-IndefArray *create_indef_array(int32_t capacity);
+IA *create_indef_array(int32_t capacity);
 
-void delete_indef_array(IndefArray **ppIndefArray);
+void delete_indef_array(IA **ppIA);
 
-void set_data_indef_array(IndefArray *pIndefArray, unsigned char *data, int32_t lengthData, int32_t *errCode);
+void set_data_indef_array(IA *pIA, unsigned char *data, int32_t lengthData, int32_t *errCode);
 
-unsigned char *get_all_data_indef_array(IndefArray *pIndefArray, int32_t *lengthGotten, int32_t *errCode);
+unsigned char *get_all_data_indef_array(IA *pIA, int32_t *lengthGotten, int32_t *errCode);
 
-void copy_indef_array(IndefArray *dest, IndefArray *src, int32_t *errCode);
+void copy_indef_array(IA *dest, IA *src, int32_t *errCode);
 
-void double_capacity_indef_array(IndefArray *pIndefArray, int32_t *errCode);
+void double_capacity_indef_array(IA *pIA, int32_t *errCode);
 
-void expand_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, int32_t *errCode);
+void expand_capacity_indef_array(IA *pIA, int32_t newCapacity, int32_t *errCode);
 
-void reduce_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, int32_t *errCode);
+void reduce_capacity_indef_array(IA *pIA, int32_t newCapacity, int32_t *errCode);
 
-static void resize_capacity_indef_array(IndefArray *pIndefArray, int32_t newCapacity, int32_t *errCode);
+static void resize_capacity_indef_array(IA *pIA, int32_t newCapacity, int32_t *errCode);
 
-unsigned char get_octet_indef_array(IndefArray *pIndefArray, int32_t *errCode);
+unsigned char get_octet_indef_array(IA *pIA, int32_t *errCode);
 
-unsigned char *get_octets_indef_array(IndefArray *pIndefArray, int32_t *errCode, int32_t expectedLength);
+unsigned char *get_octets_indef_array(IA *pIA, int32_t *errCode, int32_t expectedLength);
 
-void append_octet_indef_array(IndefArray *pIndefArray, unsigned char octet, int32_t *errCode);
+void append_octet_indef_array(IA *pIA, unsigned char octet, int32_t *errCode);
 
 void
-append_octets_indef_array(IndefArray *pIndefArray, unsigned char *octets, int32_t appendedLength, int32_t *errCode);
+append_octets_indef_array(IA *pIA, unsigned char *octets, int32_t appendedLength, int32_t *errCode);
 
 #endif //BERTREE_INDEFINITEARRAY_H
