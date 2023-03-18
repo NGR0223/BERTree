@@ -3,6 +3,8 @@
 //
 
 #include "../include/interface.h"
+#include "../../Base/include/base.h"
+#include "stdio.h"
 
 void convert_hex_string_to_mb_tree(unsigned char *data, int32_t lengthData, TREE *tree, int32_t *errCode)
 {
@@ -12,15 +14,15 @@ void convert_hex_string_to_mb_tree(unsigned char *data, int32_t lengthData, TREE
         return;
     }
 
-    // Convert unsigned char *data to IndefArray
-    IndefArray *tmp = create_indef_array(lengthData);
+    // Convert unsigned char *pOctets to IA
+    IA *tmp = create_indef_array(lengthData);
     set_data_indef_array(tmp, data, lengthData, errCode);
     if (*errCode != 0)
     {
         return;
     }
 
-    handle_TLV(tmp, tree, errCode);
+//    handle_TLV(tmp, tree, errCode);
 }
 
 void show_mb_tree(TREE *tree, int32_t *errCode)

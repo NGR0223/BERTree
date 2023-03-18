@@ -7,15 +7,15 @@
 #include <string.h>
 #include <stdlib.h>
 
-static void init_node(NODE *initNode, IndefArray *type, IndefArray *length, IndefArray *value)
+void init_node(NODE *initNode, TLV *pTlv)
 {
-    initNode->indexParent = 0;
-    initNode->indexBrother = 0;
-    initNode->indexChild = 0;
+    initNode->indexParent = -1;
+    initNode->indexBrother = -1;
+    initNode->indexChild = -1;
 
-    copy_indef_array(initNode->type, type, NULL);
-    copy_indef_array(initNode->length, length, NULL);
-    copy_indef_array(initNode->value, value, NULL);
+    copy_ia(initNode->pTlv->type, pTlv->type, NULL);
+    copy_ia(initNode->pTlv->length, pTlv->length, NULL);
+    copy_ia(initNode->pTlv->value, pTlv->value, NULL);
 }
 
 static int32_t get_index_last_child(int32_t indexChild, TREE *tree)
@@ -31,7 +31,10 @@ void add_child(NODE *parent, NODE *child, TREE *tree, int32_t *errCode)
 {
     if (parent == NULL || child == NULL || errCode == NULL)
     {
-        *errCode = BER_ERROR_CODE_INVALID_ARG;
+        if (errCode != NULL)
+        {
+            *errCode = BER_ERROR_CODE_INVALID_ARG;
+        }
         return;
     }
 
@@ -47,30 +50,33 @@ void add_child(NODE *parent, NODE *child, TREE *tree, int32_t *errCode)
 
     memcpy(&tree->nodes[tree->nextEntry], child, sizeof(NODE));
     tree->nextEntry++;
-    *errCode = BER_ERROR_CODE_OK;
+    if (errCode != NULL)
+    {
+        *errCode = BER_ERROR_CODE_OK;
+    }
 }
 
-static void handle_primitive_value(IndefArray *pValue, TREE *tree)
+static void handle_primitive_value(IA *pValue, TREE *tree)
 {
 
 }
 
-static void handle_constructed_value(IndefArray *pValue, TREE *tree)
+static void handle_constructed_value(IA *pValue, TREE *tree)
 {
 
 }
 
-static void handle_TLV(IndefArray *pData, TREE *pTree, int32_t *errCode)
+static void handle_TLV(IA *pData, TREE *pTree, int32_t *errCode)
 {
     // Handle Type
-    unsigned char firstOctetType = get_octet_indef_array(pData, errCode);
+    unsigned char firstOctetType = get_octet_ia(pData, errCode);
     int32_t flagConstructed = firstOctetType >> 5 & 0x01;
 
-    IndefArray *pType = create_indef_array(1);
-    append_octet_indef_array(pType, firstOctetType, errCode);
+    IA *pType = create_ia(1);
+    append_octet_ia(pType, firstOctetType, errCode);
     if ((firstOctetType & 0x1f) == 0x1f)    // Value of Type is bigger than 31(Hex:1f)
     {
-        unsigned char curOctet = get_octet_indef_array(pData, errCode);
+        unsigned char curOctet = get_octet_ia(pData, errCode);
         while (curOctet >> 7 & 0x01) // msb is "1", which means more octets
         {
 
@@ -78,16 +84,16 @@ static void handle_TLV(IndefArray *pData, TREE *pTree, int32_t *errCode)
     }
 
     // Handle Length
-    unsigned char firstOctetLength = get_octet_indef_array(pData, errCode);
-    IndefArray *pLength = create_indef_array(1);
-    append_octet_indef_array(pLength, firstOctetLength, errCode);
+    unsigned char firstOctetLength = get_octet_ia(pData, errCode);
+    IA *pLength = create_ia(1);
+    append_octet_ia(pLength, firstOctetLength, errCode);
     if (firstOctetLength > 128 && firstOctetLength < 255)   // Definite, long
     {
         int32_t numOctetsLength = firstOctetLength & 0x7f;
-        expand_capacity_indef_array(pLength, 1 + numOctetsLength, errCode);
+        expand_capacity_ia(pLength, 1 + numOctetsLength, errCode);
 
-        unsigned char *octetsLength = get_octets_indef_array(pData, errCode, numOctetsLength);
-        append_octets_indef_array(pLength, octetsLength, numOctetsLength, errCode);
+        unsigned char *octetsLength = get_octets_ia(pData, numOctetsLength, errCode);
+        append_octets_ia(pLength, octetsLength, numOctetsLength, errCode);
     }
     else if (firstOctetLength == 255)   // Reserved
     {
@@ -109,9 +115,9 @@ static void handle_TLV(IndefArray *pData, TREE *pTree, int32_t *errCode)
         if (firstOctetLength < 128) // Definite, short
         {
             numOctetsValue = firstOctetLength;
-            IndefArray *pValue = create_indef_array(numOctetsValue);
-            unsigned char *octetsValue = get_octets_indef_array(pData, errCode, numOctetsValue);
-            set_data_indef_array(pValue, octetsValue, numOctetsValue, errCode);
+            IA *pValue = create_ia(numOctetsValue);
+            unsigned char *octetsValue = get_octets_ia(pData, errCode, numOctetsValue);
+            set_all_octets_ia(pValue, octetsValue, numOctetsValue, errCode);
         }
         else if (firstOctetLength == 128)    // Indefinite
         {
@@ -129,8 +135,6 @@ static void handle_TLV(IndefArray *pData, TREE *pTree, int32_t *errCode)
             }
         }
         NODE *pNode = (NODE *) calloc(1, sizeof(NODE));
-        init_node(pNode, pType, pLength, pData);
+        init_node(pNode, NULL);
     }
 }
-
-

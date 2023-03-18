@@ -14,7 +14,7 @@ void print_error_info(int32_t errCode)
             printf("First octet of Length is 255, which means reserved\n");
             break;
         case BER_ERROR_CODE_ARRAY_NO_DATA:
-            printf("There is no data in a indefinite array\n");
+            printf("There is no pOctets in a indefinite array\n");
             break;
         case BER_ERROR_CODE_NO_ENOUGH_OCTETS:
             printf("Expected number of octets is bigger than remain number of octets in indefinite array\n");

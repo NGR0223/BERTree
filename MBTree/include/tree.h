@@ -12,9 +12,9 @@
 
 typedef struct tlv
 {
-    IndefArray *type;
-    IndefArray *length;
-    IndefArray *value;
+    IA *type;
+    IA *length;
+    IA *value;
 } TLV;
 
 typedef struct node
@@ -33,7 +33,7 @@ typedef struct tree
 } TREE;
 
 
-static void init_node(NODE *initNode, IndefArray *type, IndefArray *length, IndefArray *value);
+void init_node(NODE *initNode, TLV *pTlv);
 
 void add_child(NODE *parent, NODE *child, TREE *tree, int *errCode);
 
