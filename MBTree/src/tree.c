@@ -5,136 +5,104 @@
 #include "../include/tree.h"
 #include "../../Base/include/base.h"
 #include <string.h>
-#include <stdlib.h>
 
-void init_node(NODE *initNode, TLV *pTlv)
+
+void init_node(NODE *pInitNode, IA *pType, IA *pLength, IA *pValue, int32_t *pErrCode)
 {
-    initNode->indexParent = -1;
-    initNode->indexBrother = -1;
-    initNode->indexChild = -1;
+    if (pInitNode == NULL || pType == NULL || pLength == NULL || pValue == NULL)
+    {
+        if (pErrCode != NULL)
+        {
+            *pErrCode = BER_ERROR_CODE_INVALID_ARG;
+        }
+        return;
+    }
 
-    copy_ia(initNode->pTlv->type, pTlv->type, NULL);
-    copy_ia(initNode->pTlv->length, pTlv->length, NULL);
-    copy_ia(initNode->pTlv->value, pTlv->value, NULL);
+    if (pInitNode->type == NULL)
+    {
+        pInitNode->type = create_ia(pType->capacity);
+    }
+    if (pInitNode->length == NULL)
+    {
+        pInitNode->length = create_ia(pLength->capacity);
+    }
+    if (pInitNode->value == NULL)
+    {
+        pInitNode->value = create_ia(pValue->capacity);
+    }
+
+    pInitNode->indexParent = -1;
+    pInitNode->indexBrother = -1;
+    pInitNode->indexChild = -1;
+    copy_ia(pInitNode->type, pType, NULL);
+    copy_ia(pInitNode->length, pLength, NULL);
+    copy_ia(pInitNode->value, pValue, NULL);
+
+    if (pErrCode != NULL)
+    {
+        *pErrCode = BER_ERROR_CODE_OK;
+    }
 }
 
 static int32_t get_index_last_child(int32_t indexChild, TREE *tree)
 {
-    while (tree->nodes[indexChild].indexBrother != 0)
+    while (tree->nodes[indexChild].indexBrother != -1)
     {
         indexChild = tree->nodes[indexChild].indexBrother;
     }
     return indexChild;
 }
 
-void add_child(NODE *parent, NODE *child, TREE *tree, int32_t *errCode)
+void add_child(NODE *pParent, NODE *pChild, TREE *pTree, int32_t *pErrCode)
 {
-    if (parent == NULL || child == NULL || errCode == NULL)
+    if (pParent == NULL || pChild == NULL)
     {
-        if (errCode != NULL)
+        if (pErrCode != NULL)
         {
-            *errCode = BER_ERROR_CODE_INVALID_ARG;
+            *pErrCode = BER_ERROR_CODE_INVALID_ARG;
         }
         return;
     }
 
-    if (parent->indexChild == 0)
+    if (pParent->indexChild == -1)
     {
-        parent->indexChild = tree->nextEntry;
+        pParent->indexChild = pTree->nextEntry;
     }
     else
     {
-        int32_t indexLastChild = get_index_last_child(parent->indexChild, tree);
-        tree->nodes[indexLastChild].indexBrother = tree->nextEntry;
+        int32_t indexLastChild = get_index_last_child(pParent->indexChild, pTree);
+        pTree->nodes[indexLastChild].indexBrother = pTree->nextEntry;
     }
 
-    memcpy(&tree->nodes[tree->nextEntry], child, sizeof(NODE));
-    tree->nextEntry++;
-    if (errCode != NULL)
+    memcpy(&pTree->nodes[pTree->nextEntry], pChild, sizeof(NODE));
+    pTree->nextEntry++;
+
+    if (pErrCode != NULL)
     {
-        *errCode = BER_ERROR_CODE_OK;
+        *pErrCode = BER_ERROR_CODE_OK;
     }
 }
 
-static void handle_primitive_value(IA *pValue, TREE *tree)
+void add_node(TREE *pTree, int32_t indexParent, NODE *pNewNode, int32_t *pErrCode)
 {
-
-}
-
-static void handle_constructed_value(IA *pValue, TREE *tree)
-{
-
-}
-
-static void handle_TLV(IA *pData, TREE *pTree, int32_t *errCode)
-{
-    // Handle Type
-    unsigned char firstOctetType = get_octet_ia(pData, errCode);
-    int32_t flagConstructed = firstOctetType >> 5 & 0x01;
-
-    IA *pType = create_ia(1);
-    append_octet_ia(pType, firstOctetType, errCode);
-    if ((firstOctetType & 0x1f) == 0x1f)    // Value of Type is bigger than 31(Hex:1f)
+    if (pTree == NULL || pNewNode == NULL)
     {
-        unsigned char curOctet = get_octet_ia(pData, errCode);
-        while (curOctet >> 7 & 0x01) // msb is "1", which means more octets
+        if (pErrCode != NULL)
         {
-
-        }
-    }
-
-    // Handle Length
-    unsigned char firstOctetLength = get_octet_ia(pData, errCode);
-    IA *pLength = create_ia(1);
-    append_octet_ia(pLength, firstOctetLength, errCode);
-    if (firstOctetLength > 128 && firstOctetLength < 255)   // Definite, long
-    {
-        int32_t numOctetsLength = firstOctetLength & 0x7f;
-        expand_capacity_ia(pLength, 1 + numOctetsLength, errCode);
-
-        unsigned char *octetsLength = get_octets_ia(pData, numOctetsLength, errCode);
-        append_octets_ia(pLength, octetsLength, numOctetsLength, errCode);
-    }
-    else if (firstOctetLength == 255)   // Reserved
-    {
-        if (errCode != NULL)
-        {
-            *errCode = BER_ERROR_CODE_RESERVED_LENGTH;
+            *pErrCode = BER_ERROR_CODE_INVALID_ARG;
         }
         return;
     }
 
-    // Handle Value
-    int32_t numOctetsValue = -1;
-    if (flagConstructed)    // Constructed Value
+    if (indexParent == -1)  // Root node
     {
-
+        memcpy(&pTree->nodes[0], pNewNode, sizeof(NODE));
+        pTree->nextEntry++;
     }
-    else    // Primitive Value
+    else
     {
-        if (firstOctetLength < 128) // Definite, short
-        {
-            numOctetsValue = firstOctetLength;
-            IA *pValue = create_ia(numOctetsValue);
-            unsigned char *octetsValue = get_octets_ia(pData, errCode, numOctetsValue);
-            set_all_octets_ia(pValue, octetsValue, numOctetsValue, errCode);
-        }
-        else if (firstOctetLength == 128)    // Indefinite
-        {
-
-        }
-        else if (firstOctetLength > 128 && firstOctetLength < 255)  // Definite, long
-        {
-
-        }
-        else    // Reserved
-        {
-            if (errCode != NULL)
-            {
-
-            }
-        }
-        NODE *pNode = (NODE *) calloc(1, sizeof(NODE));
-        init_node(pNode, NULL);
+        pNewNode->indexParent = indexParent;
+        add_child(&pTree->nodes[indexParent], pNewNode, pTree, NULL);
     }
 }
+

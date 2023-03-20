@@ -6,6 +6,9 @@
 #define BERTREE_INTERFACE_H
 
 #include "../../MBTree/include/tree.h"
+
+void handle_TLV(int32_t indexParent, IA *pData, TREE *pTree, int32_t *pErrCode);
+
 void convert_hex_string_to_mb_tree(unsigned char *data, int32_t lengthData, TREE *tree, int32_t *errCode);
 
 void show_mb_tree(TREE *tree, int32_t *errCode);

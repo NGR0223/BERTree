@@ -9,21 +9,15 @@
 
 #define MAXTREENODES 1024
 
-
-typedef struct tlv
-{
-    IA *type;
-    IA *length;
-    IA *value;
-} TLV;
-
 typedef struct node
 {
     int32_t indexParent;
     int32_t indexBrother;
     int32_t indexChild;
 
-    TLV *pTlv;
+    IA *type;
+    IA *length;
+    IA *value;
 } NODE;
 
 typedef struct tree
@@ -32,9 +26,11 @@ typedef struct tree
     NODE nodes[MAXTREENODES];
 } TREE;
 
+void init_node(NODE *pInitNode, IA *pType, IA *pLength, IA *pValue, int32_t *pErrCode);
 
-void init_node(NODE *initNode, TLV *pTlv);
+void add_child(NODE *pParent, NODE *pChild, TREE *pTree, int *pErrCode);
 
-void add_child(NODE *parent, NODE *child, TREE *tree, int *errCode);
+void add_node(TREE *pTree, int32_t indexParent, NODE *pNewNode, int32_t *pErrCode);
+
 
 #endif //BERTREE_TREE_H
